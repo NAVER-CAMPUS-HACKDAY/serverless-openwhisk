@@ -28,25 +28,23 @@ class GradleJava extends BaseRuntime {
       .map((v) => v.name)[0];
   }
 
-  // function to encode file data to base64 encoded string
-  toBase64(file) {
-    // read binary dataq
-    const buffer = fs.readFile(file);
-    // convert binary data to base64 encoded string
-    return new Buffer(buffer).toString('base64');
-  }
 
   generateActionPackage(functionObject) {
     let command = this.serverless.service.package.build || (process.platform === "win32" ? 'gradlew.bat' : './gradlew');
     let cwd = this.serverless.service.package.cwd || ".";
-    let artifact = this.serverless.service.package.artifact || `${cwd}/build/libs`;
+    let artifact = `${cwd}/build/libs`;
 
+    this.serverless.cli.log(`resolved ${artifact}`);
     return this.build(command, ["build"], cwd)
       .then(() => {
         const readFile = BbPromise.promisify(fs.readFile);
-        return readFile(this.resolveBuildArtifact(artifact));
+        const jarFile = this.resolveBuildArtifact(artifact);
+        this.serverless.cli.log(`artifact ${jarFile}`);
+        return readFile(jarFile);
       }).then(buffer => {
-        return new Buffer(buffer).toString('base64');
+        const base64 = new Buffer(buffer).toString('base64');
+        this.serverless.cli.log(base64);
+        return base64;
       }).catch((err) => {
         this.serverless.cli.log(err);
       });
