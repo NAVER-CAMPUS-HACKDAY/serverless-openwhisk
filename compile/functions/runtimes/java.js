@@ -1,12 +1,13 @@
 'use strict';
 
 const BaseRuntime = require('./base');
-const execmodule = require('child_process');
+const ChildProcessPromise = require('child-process-promise');
+const BbPromise = require('bluebird');
 const fs = require('fs');
 const glob = require("glob");
 
 class GradleJava extends BaseRuntime {
-  constructor (serverless) {
+  constructor(serverless) {
     super(serverless);
     this.kind = 'java'
   }
@@ -18,43 +19,37 @@ class GradleJava extends BaseRuntime {
   resolveBuildArtifact(artifact) {
     // if artifact is end with jar... just return it..
     const files = glob.readdirSync(artifact + '/*.jar', {});
-    return files.map((v)=> {
-      return { 
-        name:v,
-        time:fs.statSync(dir + v).mtime.getTime()
+    return files.map((v) => {
+      return {
+        name: v,
+        time: fs.statSync(dir + v).mtime.getTime()
       };
     })
-      .sort(function(a, b) { return b.time - a.time; })
-      .map(function(v) { return v.name; })[0];
+      .sort(function (a, b) {
+        return b.time - a.time;
+      })
+      .map(function (v) {
+        return v.name;
+      })[0];
   }
-  
+
   generateActionPackage(functionObject) {
+    let command = this.serverless.service.package.build || (process.platform === "win32" ? './gradlew.bat build' : './gradlew build');
+    let artifact = this.serverless.service.package.artifact || "build/libs";
 
-      let command = (process.platform === "win32" ? './gradlew.bat build' : './gradlew build');
-      let artifact = this.serverless.service.package.artifact || "build/libs";
+    console.log(process.cwd());
 
-      this.serverless.cli.consoleLog(process.cwd());
-
-      return this.build(command,(jar) => this.serverless.cli.consoleLog("call back"))
-          .then(() => {
-            artifact = this.resolveBuildArtifact(artifact);
-            // 로드
+    return this.build(command)
+      .then(() => {
+        console.log("wow");
+        artifact = this.resolveBuildArtifact(artifact);
+        // 로드
       });
   }
 
-    build(cmd) {
-        this.serverless.cli.consoleLog(cmd);
-        const execs = BbPromise.promisify(execmodule.execFile(cmd));
-        return execs(cmd, (err, out, code)  => {
-            if (err instanceof Error)
-                throw err;
-            process.stderr.write(err);
-            process.stdout.write(out);
-            if (code !== 0) {
-                process.exit(-1);
-            }
-        });
-    }
+  build(cmd) {
+    return ChildProcessPromise.exec(cmd);
+  }
 }
 
 module.exports = GradleJava;
