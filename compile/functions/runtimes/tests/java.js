@@ -37,8 +37,8 @@ describe('Java', () => {
 
   describe('#exec()', () => {
     it('should return jar file byte for java handler', () =>
-      java.exec({runtime: 'java'}).then(result => {
-        expect(result).to.deep.equal({main: undefined, kind: "java:default", code: "wwewewe"});
+      java.exec({runtime: 'java', handler: "wow.KKK"}).then(result => {
+        expect(result).to.deep.equal({main: "wow.KKK", kind: "java:default", code: "wwewewe"});
       })
     );
   });
