@@ -35,17 +35,17 @@ class GradleJava extends BaseRuntime {
 
   generateActionPackage(functionObject) {
     let command = this.serverless.service.package.build || (process.platform === "win32" ? './gradlew.bat build' : './gradlew build');
+    let cwd = this.serverless.service.package.cwd || ".";
     let artifact = this.serverless.service.package.artifact || "build/libs";
 
     console.log(process.cwd());
-
-    return this.build(command)
+    return this.build(command, cwd)
       .then((result) => {
         const stdout = result.stdout;
         const stderr = result.stderr;
         console.log('stdout: ', stdout);
         console.log('stderr: ', stderr);
-      
+
         return "wwewewe";
         // .log("wow");
         // return this.resolveBuildArtifact(artifact);
@@ -56,8 +56,8 @@ class GradleJava extends BaseRuntime {
       );
   }
 
-  build(cmd) {
-    return ChildProcessPromise.exec(cmd);
+  build(cmd, cwd) {
+    return ChildProcessPromise.exec(cmd, {cwd});
   }
 }
 

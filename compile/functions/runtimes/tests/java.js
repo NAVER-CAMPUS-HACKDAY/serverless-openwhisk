@@ -17,7 +17,7 @@ describe('Java', () => {
     sandbox = sinon.sandbox.create();
     serverless = {
       classes: {Error},
-      service: {package: {build: "/Users/Naver/project/java-gradle-template/gradlew build"}},
+      service: {package: {cwd: process.env.TEST_CWD}},
       getProvider: sandbox.spy()
     };
     serverless.service.provider = {name: 'openwhisk'};
@@ -39,7 +39,6 @@ describe('Java', () => {
     it('should return jar file byte for java handler', () =>
       java.exec({runtime: 'java'}).then(result => {
         expect(result).to.deep.equal({main: undefined, kind: "java:default", code: "wwewewe"});
-//        done();
       })
     );
   });
