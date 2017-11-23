@@ -9,32 +9,38 @@ const sinon = require('sinon');
 const Java = require('../java');
 
 describe('Java', () => {
-    let serverless;
-    let java;
-    let sandbox;
+  let serverless;
+  let java;
+  let sandbox;
 
-    beforeEach(() => {
-        sandbox = sinon.sandbox.create();
-        serverless = {classes: {Error}, service: { package : {build: "/Users/Naver/project/java-gradle-template/gradlew build"}}, getProvider: sandbox.spy()};
-        serverless.service.provider = { name: 'openwhisk' };
-        java = new Java(serverless);
-    });
+  beforeEach(() => {
+    sandbox = sinon.sandbox.create();
+    serverless = {
+      classes: {Error},
+      service: {package: {build: "/Users/Naver/project/java-gradle-template/gradlew build"}},
+      getProvider: sandbox.spy()
+    };
+    serverless.service.provider = {name: 'openwhisk'};
+    java = new Java(serverless);
+  });
 
-    afterEach(() => {
-        sandbox.restore();
-    });
+  afterEach(() => {
+    sandbox.restore();
+  });
 
-    describe('#match()', () => {
-        it('should match with explicit runtime', () => {
-            serverless.service.provider.runtime = 'java';
-            expect(java.match({runtime: 'java'})).to.equal(true)
-        });
+  describe('#match()', () => {
+    it('should match with explicit runtime', () => {
+      serverless.service.provider.runtime = 'java';
+      expect(java.match({runtime: 'java'})).to.equal(true)
     });
+  });
 
-    describe('#exec()', () => {
-        it('should return jar file byte for java handler', () => {
-            
-            java.exec({ runtime: 'java' });
-        });
-    });
+  describe('#exec()', () => {
+    it('should return jar file byte for java handler', () =>
+      java.exec({runtime: 'java'}).then(result => {
+        expect(result).to.deep.equal({main: undefined, kind: "java:default", code: "wwewewe"});
+//        done();
+      })
+    );
+  });
 });

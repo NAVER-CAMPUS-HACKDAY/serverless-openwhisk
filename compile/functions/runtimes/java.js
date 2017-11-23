@@ -40,11 +40,20 @@ class GradleJava extends BaseRuntime {
     console.log(process.cwd());
 
     return this.build(command)
-      .then(() => {
-        console.log("wow");
-        artifact = this.resolveBuildArtifact(artifact);
+      .then((result) => {
+        const stdout = result.stdout;
+        const stderr = result.stderr;
+        console.log('stdout: ', stdout);
+        console.log('stderr: ', stderr);
+      
+        return "wwewewe";
+        // .log("wow");
+        // return this.resolveBuildArtifact(artifact);
         // 로드
-      });
+      }).catch(() => {
+          console.log("ewe");
+        }
+      );
   }
 
   build(cmd) {
