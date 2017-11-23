@@ -1,9 +1,9 @@
 'use strict';
 
 const BaseRuntime = require('./base');
-const ChildProcessPromise = require('child-process-promise');
-const BbPromise = require('bluebird');
+const spawn = require('child_process').spawn;
 const fs = require('fs');
+const BbPromise = require('bluebird');
 const glob = require("glob");
 
 class GradleJava extends BaseRuntime {
@@ -30,34 +30,42 @@ class GradleJava extends BaseRuntime {
 
   // function to encode file data to base64 encoded string
   toBase64(file) {
-    // read binary data
-    const buffer = fs.readFileSync(file);
+    // read binary dataq
+    const buffer = fs.readFile(file);
     // convert binary data to base64 encoded string
     return new Buffer(buffer).toString('base64');
   }
 
   generateActionPackage(functionObject) {
-    let command = this.serverless.service.package.build || (process.platform === "win32" ? './gradlew.bat build' : './gradlew build');
+    let command = this.serverless.service.package.build || (process.platform === "win32" ? 'gradlew.bat' : './gradlew');
     let cwd = this.serverless.service.package.cwd || ".";
     let artifact = this.serverless.service.package.artifact || `${cwd}/build/libs`;
-    console.log(process.cwd());
-    return this.build(command, cwd)
-      .then((result) => {
-        const stdout = result.stdout;
-        const stderr = result.stderr;
-        console.log(stdout);
-        console.log(stderr);
-        const resolved = this.resolveBuildArtifact(artifact);
-        return this.toBase64(resolved);
-        // 로드
-      }).catch((e) => {
-          console.log(e);
-        }
-      );
+
+    return this.build(command, ["build"], cwd)
+      .then(() => {
+        const readFile = BbPromise.promisify(fs.readFile);
+        return readFile(this.resolveBuildArtifact(artifact));
+      }).then(buffer => {
+        return buffer.toString('base64');
+      }).catch((err) => {
+        this.serverless.cli.log(err);
+      });
   }
 
-  build(cmd, cwd) {
-    return ChildProcessPromise.exec(cmd, {cwd});
+  build(cmd, args, cwd) {
+    return new Promise((resolve, reject) => {
+      this.serverless.cli.log(`running build cmd : ${cmd} ${args} in ${cwd}\n`);
+      const buildJob = spawn(cmd, args, {cwd: cwd, stdio: ['inherit', 'inherit', 'inherit']});
+      buildJob
+        .on("error", reject)
+        .on("close", (code) => {
+          if (code === 0) {
+            resolve();
+          } else {
+            reject(stderr);
+          }
+        });
+    });
   }
 }
 

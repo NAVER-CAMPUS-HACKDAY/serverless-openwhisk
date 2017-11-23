@@ -18,7 +18,12 @@ describe('Java', () => {
     serverless = {
       classes: {Error},
       service: {package: {cwd: process.env.TEST_CWD}},
-      getProvider: sandbox.spy()
+      getProvider: sandbox.spy(),
+      cli: {
+        log: (msg) => {
+          console.log(msg);
+        }
+      }
     };
     serverless.service.provider = {name: 'openwhisk'};
     java = new Java(serverless);
