@@ -46,7 +46,7 @@ class GradleJava extends BaseRuntime {
         const readFile = BbPromise.promisify(fs.readFile);
         return readFile(this.resolveBuildArtifact(artifact));
       }).then(buffer => {
-        return buffer.toString('base64');
+        return new Buffer(buffer).toString('base64');
       }).catch((err) => {
         this.serverless.cli.log(err);
       });
