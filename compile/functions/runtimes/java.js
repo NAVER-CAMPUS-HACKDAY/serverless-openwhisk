@@ -6,7 +6,7 @@ const fs = require('fs');
 const BbPromise = require('bluebird');
 const glob = require("glob");
 
-class GradleJava extends BaseRuntime {
+class Java extends BaseRuntime {
   constructor(serverless) {
     super(serverless);
     this.kind = 'java'
@@ -30,21 +30,20 @@ class GradleJava extends BaseRuntime {
 
 
   generateActionPackage(functionObject) {
-    let command = this.serverless.service.package.build || (process.platform === "win32" ? 'gradlew.bat' : './gradlew');
+    let command = this.serverless.service.package.build || 
+      (process.platform === "win32" ? 'gradlew.bat' : './gradlew');
     let cwd = this.serverless.service.package.cwd || ".";
-    let artifact = `${cwd}/build/libs`;
 
-    this.serverless.cli.log(`resolved ${artifact}`);
+    let jarDir = this.serverless.service.package.jar_dir || `${cwd}/build/libs`;
+    this.serverless.cli.log(`use: ${jarDir}`);
     return this.build(command, ["build"], cwd)
       .then(() => {
         const readFile = BbPromise.promisify(fs.readFile);
-        const jarFile = this.resolveBuildArtifact(artifact);
-        this.serverless.cli.log(`artifact ${jarFile}`);
+        const jarFile = this.resolveBuildArtifact(jarDir);
+        this.serverless.cli.log(`found: ${jarFile}`);
         return readFile(jarFile);
       }).then(buffer => {
-        const base64 = new Buffer(buffer).toString('base64');
-        this.serverless.cli.log(base64);
-        return base64;
+        return new Buffer(buffer).toString('base64');
       }).catch((err) => {
         this.serverless.cli.log(err);
       });
@@ -60,11 +59,11 @@ class GradleJava extends BaseRuntime {
           if (code === 0) {
             resolve();
           } else {
-            reject(stderr);
+            reject(code);
           }
         });
     });
   }
 }
 
-module.exports = GradleJava;
+module.exports = Java;
