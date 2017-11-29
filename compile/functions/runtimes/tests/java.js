@@ -18,7 +18,12 @@ describe('Java', () => {
     serverless = {
       classes: {Error},
       service: {package: {cwd: process.env.TEST_CWD}},
-      getProvider: sandbox.spy()
+      getProvider: sandbox.spy(),
+      cli: {
+        log: (msg) => {
+          console.log(msg);
+        }
+      }
     };
     serverless.service.provider = {name: 'openwhisk'};
     java = new Java(serverless);
@@ -37,8 +42,8 @@ describe('Java', () => {
 
   describe('#exec()', () => {
     it('should return jar file byte for java handler', () =>
-      java.exec({runtime: 'java'}).then(result => {
-        expect(result).to.deep.equal({main: undefined, kind: "java:default", code: "wwewewe"});
+      java.exec({runtime: 'java', handler: "handler.Main"}).then(result => {
+        expect(result).to.deep.equal({main: "handler.Main", kind: "java:default", code: "wwewewe"});
       })
     );
   });

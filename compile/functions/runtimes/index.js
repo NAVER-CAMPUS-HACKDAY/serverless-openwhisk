@@ -6,7 +6,7 @@ const Node = require('./node')
 const Python = require('./python')
 const Swift = require('./swift')
 const Php = require('./php')
-const GradleJava = require('./java')
+const GradleJava = require('./java');
 const Sequence = require('./sequence')
 
 class Runtimes {
@@ -19,11 +19,11 @@ class Runtimes {
       new Python(serverless),
       new Swift(serverless),
       new Php(serverless),
-        new Sequence(serverless),
-        new GradleJava(serverless),
+      new Sequence(serverless),
+      new GradleJava(serverless),
     ];
   }
- 
+
   exec (functionObj) {
     const matched = this.runtimes.find(runtime => runtime.match(functionObj))
     if (matched) return Promise.resolve(matched.exec(functionObj))
