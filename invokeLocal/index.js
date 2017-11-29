@@ -108,6 +108,10 @@ class OpenWhiskInvokeLocal {
         handlerPath,
         handlerName,
         this.options.data);
+    } else if (runtime.startsWith('java')) {
+      return this.invokeLocalJava(
+        handler,
+        this.options.data);
     }
 
     throw new this.serverless.classes
@@ -163,6 +167,34 @@ class OpenWhiskInvokeLocal {
       python.stdin.write(JSON.stringify(params || {}));
       python.stdin.end();
       python.on('close', () => resolve());
+    });
+  }
+
+  invokeLocalJava(handler, params) {
+    const command = this.serverless.service.package.build ||
+      (process.platform === 'win32' ? './gradlew.bat' : './gradlew');
+    const cwd = this.serverless.service.package.cwd || '.';
+    const jarDir = this.serverless.service.package.jar_dir || `${cwd}/build/libs`;
+    return new BbPromise((resolve, reject) => {
+      const buildInvoker = spawn(command, ['build', '-P', 'includeInvoker'], { cwd, stdio: 'inherit' });
+      buildInvoker
+        .on('error', reject)
+        .on('close', (code) => {
+          if (code === 0) {
+            resolve();
+          } else {
+            reject(stderr);
+          }
+        });
+    })
+      .then(() => {
+      const run = spawn('java', ['-jar', `${jarDir}/FunctionLoader.jar`, handler, JSON.stringify(params)], {
+        cwd, stdio: 'inherit' });
+      run
+        .on('error', (err) => {
+          this.serverless.cli.consoleLog(err);
+          process.exit(1);
+        });
     });
   }
 }
