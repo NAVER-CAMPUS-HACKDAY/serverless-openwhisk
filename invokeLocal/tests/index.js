@@ -251,13 +251,17 @@ describe('OpenWhiskInvokeLocal', () => {
   });
 
   describe('#invokeLocal()', () => {
-    let invokeLocalNodeJsStub, invokeLocalPythonStub;
+    let invokeLocalNodeJsStub,
+      invokeLocalPythonStub,
+      invokeLocalGradleJavaStub;
 
     beforeEach(() => {
       invokeLocalNodeJsStub =
         sinon.stub(openwhiskInvokeLocal, 'invokeLocalNodeJs').returns(BbPromise.resolve());
       invokeLocalPythonStub =
         sinon.stub(openwhiskInvokeLocal, 'invokeLocalPython').returns(BbPromise.resolve());
+      invokeLocalGradleJavaStub =
+        sinon.stub(openwhiskInvokeLocal, 'invokeLocalJava').returns(BbPromise.resolve());
 
       openwhiskInvokeLocal.serverless.service.service = 'new-service';
       openwhiskInvokeLocal.options = {
@@ -274,6 +278,7 @@ describe('OpenWhiskInvokeLocal', () => {
     afterEach(() => {
       invokeLocalNodeJsStub.restore();
       invokeLocalPythonStub.restore();
+      invokeLocalGradleJavaStub.restore();
     });
 
     it('should call invokeLocalNodeJs when no runtime is set', () => openwhiskInvokeLocal.invokeLocal()
@@ -314,6 +319,25 @@ describe('OpenWhiskInvokeLocal', () => {
         )).to.be.equal(true);
         openwhiskInvokeLocal.invokeLocalPython.restore();
       })
+    });
+
+    it('should call invokeLocalGradleJava when java runtime is set', () => {
+      const originOptions = openwhiskInvokeLocal.options;
+      openwhiskInvokeLocal.options.functionObj = { handler: 'com.serverless.Handler' };
+      openwhiskInvokeLocal.options.data = { name: 'hello' };
+      openwhiskInvokeLocal.options.functionObj.runtime = 'java';
+      openwhiskInvokeLocal.invokeLocal()
+        .then(() => {
+          expect(invokeLocalGradleJavaStub.calledOnce).to.be.equal(true);
+          expect(invokeLocalGradleJavaStub.calledWithExactly(
+            'com.serverless.Handler',
+            {
+              name: 'hello',
+            }
+          )).to.be.equal(true);
+          openwhiskInvokeLocal.invokeLocalJava.restore();
+          openwhiskInvokeLocal.options = originOptions;
+        });
     });
 
     it('throw error when using invalid runtime', () => {
